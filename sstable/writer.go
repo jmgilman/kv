@@ -28,7 +28,7 @@ type SegmentWriter struct {
 func (s *SegmentWriter) Close() error {
 	// Always record the last key to the index table
 	if s.index%s.indexFactor != 0 {
-		s.table.Put(s.lastKey, s.encodeUint32(uint32(s.lastKeyIndex)))
+		s.table.Put(kv.NewKVPair(s.lastKey, s.encodeUint32(uint32(s.lastKeyIndex))))
 	}
 
 	// Write the encoded index table to the end of the stream
@@ -94,7 +94,7 @@ func (s *SegmentWriter) Write(pair kv.KVPair) (int, error) {
 	}
 
 	if (s.index+1)%s.indexFactor == 0 || (s.index+1) == 1 {
-		s.table.Put(pair.Key, s.encodeUint32(uint32(s.byteIndex)))
+		s.table.Put(kv.NewKVPair(pair.Key, s.encodeUint32(uint32(s.byteIndex))))
 	}
 	s.byteIndex += n
 	s.index += 1

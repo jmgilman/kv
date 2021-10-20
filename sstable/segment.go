@@ -50,7 +50,11 @@ func (s *Segment) Get(key string) (*kv.KVPair, error) {
 		}
 
 		if key == pair.Key {
-			return &pair, nil
+			if pair.Tombstone {
+				return nil, kv.ErrorNoSuchKey
+			} else {
+				return &pair, nil
+			}
 		}
 	}
 
@@ -97,7 +101,7 @@ func (s *Segment) LoadIndex() error {
 			}
 		}
 
-		s.index.Put(pair.Key, pair.Value)
+		s.index.Put(pair)
 	}
 
 	return nil

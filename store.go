@@ -18,7 +18,7 @@ type MemoryStore interface {
 	Min() *KVPair
 	Max() *KVPair
 	Pairs() []*KVPair
-	Put(key string, value []byte) error
+	Put(pair KVPair) error
 	Range(key string) (*KVPair, *KVPair, error)
 	Size() int
 }

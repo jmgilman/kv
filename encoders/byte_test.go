@@ -7,7 +7,6 @@ import (
 	"io"
 	"testing"
 
-	"github.com/jmgilman/kv"
 	"github.com/matryer/is"
 )
 
@@ -52,6 +51,7 @@ func TestBasicEncoderDecodePair(t *testing.T) {
 
 	key := []byte("key")
 	value := []byte("value")
+	tombstone := false
 	encoder := ByteEncoder{}
 
 	// Valid pair
@@ -59,11 +59,13 @@ func TestBasicEncoderDecodePair(t *testing.T) {
 	binary.Write(buf, binary.BigEndian, uint32(len(value)))
 	buf.Write(key)
 	buf.Write(value)
+	binary.Write(buf, binary.BigEndian, tombstone)
 
 	result, err := encoder.DecodePair(buf)
 	is.NoErr(err)
 	is.Equal(result.Key, "key")
 	is.Equal(result.Value, []byte("value"))
+	is.Equal(result.Tombstone, false)
 
 	// Invalid key
 	badKey := []byte("key")
@@ -86,6 +88,16 @@ func TestBasicEncoderDecodePair(t *testing.T) {
 	_, err = encoder.DecodePair(buf)
 	is.True(errors.Is(err, io.ErrUnexpectedEOF))
 
+	// Invalid tombstone
+	buf.Reset()
+	binary.Write(buf, binary.BigEndian, uint32(len(key)))
+	binary.Write(buf, binary.BigEndian, uint32(len(value)))
+	buf.Write(key)
+	buf.Write(value)
+
+	_, err = encoder.DecodePair(buf)
+	is.True(errors.Is(err, io.EOF))
+
 	// EOF
 	_, err = encoder.DecodePair(buf)
 	is.True(errors.Is(err, io.EOF))
@@ -95,10 +107,10 @@ func TestBasicEncoderEncodePair(t *testing.T) {
 	is := is.New(t)
 	key := "key"
 	value := []byte("value")
-	pair := kv.NewKVPair(key, value)
+	pair := NewKVPair(key, value, false)
 
 	encoder := ByteEncoder{}
 	result, err := encoder.EncodePair(pair)
 	is.NoErr(err)
-	is.Equal(len(result), headerSize+len([]byte(key))+len(value))
+	is.Equal(len(result), headerSize+len([]byte(key))+len(value)+1)
 }

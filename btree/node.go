@@ -17,7 +17,11 @@ func (n *node) get(key string) (*kv.KVPair, error) {
 	}
 
 	if key == n.pair.Key {
-		return &n.pair, nil
+		if n.pair.Tombstone {
+			return &kv.KVPair{}, kv.ErrorNoSuchKey
+		} else {
+			return &n.pair, nil
+		}
 	}
 
 	if key < n.pair.Key {

@@ -37,7 +37,7 @@ func (k *KVService) Get(key string) (*kv.KVPair, error) {
 }
 
 func (k *KVService) Put(key string, value []byte) error {
-	return k.memStore.Put(key, value)
+	return k.memStore.Put(kv.NewKVPair(key, value))
 }
 
 func NewKVService(memStore kv.MemoryStore, nvStore kv.NVStore) KVService {

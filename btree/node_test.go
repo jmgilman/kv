@@ -41,6 +41,12 @@ func TestNodeGet(t *testing.T) {
 	// Nonexistent key
 	_, err := node.get("1")
 	is.True(errors.Is(err, kv.ErrorNoSuchKey))
+
+	// Deleted key
+	pair := kv.DeleteKVPair(pairs[0].Key)
+	node.put(pair)
+	_, err = node.get(pairs[0].Key)
+	is.True(errors.Is(err, kv.ErrorNoSuchKey))
 }
 
 func TestNodeGetClosestLeft(t *testing.T) {

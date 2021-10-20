@@ -12,12 +12,12 @@ import (
 func NewFixedTree() Tree {
 	var tree Tree
 
-	tree.Put("m", []byte("m"))
-	tree.Put("i", []byte("i"))
-	tree.Put("q", []byte("q"))
-	tree.Put("t", []byte("t"))
-	tree.Put("b", []byte("b"))
-	tree.Put("y", []byte("y"))
+	tree.Put(kv.NewKVPair("m", []byte("m")))
+	tree.Put(kv.NewKVPair("i", []byte("i")))
+	tree.Put(kv.NewKVPair("q", []byte("q")))
+	tree.Put(kv.NewKVPair("t", []byte("t")))
+	tree.Put(kv.NewKVPair("b", []byte("b")))
+	tree.Put(kv.NewKVPair("y", []byte("y")))
 
 	return tree
 }
@@ -25,6 +25,20 @@ func NewFixedTree() Tree {
 func NewRandomTree(size int) (Tree, []kv.KVPair) {
 	pairs := helper.NewRandomSortedPairs(size)
 	return NewTreeFromSlice(pairs), pairs
+}
+
+func TestTreeDelete(t *testing.T) {
+	is := is.New(t)
+	tree, pairs := NewRandomTree(10)
+
+	// Delete the first pair
+	pair := pairs[0]
+	err := tree.Delete(pair.Key)
+	is.NoErr(err)
+
+	// No longer found in tree
+	_, err = tree.Get(pair.Key)
+	is.True(errors.Is(err, kv.ErrorNoSuchKey))
 }
 
 func TestTreeGet(t *testing.T) {
@@ -108,22 +122,22 @@ func TestTreePut(t *testing.T) {
 
 	// First node is root
 	pair := kv.NewKVPair("j", []byte("j"))
-	tree.Put("j", []byte("j"))
+	tree.Put(pair)
 	is.Equal(tree.root.pair.Key, pair.Key)
 
 	// Second node to the left
 	pair = kv.NewKVPair("a", []byte("a"))
-	tree.Put("a", []byte("a"))
+	tree.Put(pair)
 	is.Equal(tree.root.left.pair.Key, pair.Key)
 
 	// Third node to the right
 	pair = kv.NewKVPair("z", []byte("z"))
-	tree.Put("z", []byte("z"))
+	tree.Put(pair)
 	is.Equal(tree.root.right.pair.Key, pair.Key)
 
 	// Updates node
 	pair = kv.NewKVPair("j", []byte("test"))
-	tree.Put("j", []byte("test"))
+	tree.Put(pair)
 	is.Equal(tree.root.pair.Value, []byte("test"))
 
 }

@@ -11,7 +11,8 @@ type Tree struct {
 }
 
 func (t *Tree) Delete(key string) error {
-	panic("Unimplemented")
+	pair := kv.DeleteKVPair(key)
+	return t.Put(pair)
 }
 
 // Get searches for the given key in the tree structure and returns its
@@ -86,8 +87,7 @@ func (t *Tree) Pairs() []*kv.KVPair {
 
 // Put adds a new KVPair into the tree structure or updates the value of the
 // associated KVPair if the key already exists.
-func (t *Tree) Put(key string, value []byte) error {
-	pair := kv.NewKVPair(key, value)
+func (t *Tree) Put(pair kv.KVPair) error {
 	if t.root == nil {
 		t.root = &node{pair, nil, nil}
 		t.size++

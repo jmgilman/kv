@@ -23,7 +23,7 @@ func NewMockSegment(pairs []kv.KVPair) (Segment, mock.MockEncoder) {
 		if i == 1 || i%3 == 0 || i == len(pairs)-1 {
 			buf := make([]byte, 4)
 			binary.BigEndian.PutUint32(buf, uint32(i*4))
-			store.Put(pair.Key, buf)
+			store.Put(kv.NewKVPair(pair.Key, buf))
 		}
 	}
 
@@ -79,11 +79,11 @@ func NewMockSegmentFile(file afero.File, pairs []kv.KVPair, indexFactor int) (da
 	return encoder, indexEncoder, nil
 }
 
-func TestSegmentFind(t *testing.T) {
+func TestSegmentGet(t *testing.T) {
 	size := 10
 	is := is.New(t)
 
-	// Find every key in the test data
+	// Get every key in the test data
 	segment, encoder := NewMockSegment(helper.NewRandomSortedPairs(size))
 	pairs := encoder.Pairs()
 	for _, pair := range pairs {
@@ -95,6 +95,11 @@ func TestSegmentFind(t *testing.T) {
 
 	// Test non-existent key
 	_, err := segment.Get("123")
+	is.True(errors.Is(err, kv.ErrorNoSuchKey))
+
+	// Test deleted key
+	pairs[0].Tombstone = true
+	_, err = segment.Get(pairs[0].Key)
 	is.True(errors.Is(err, kv.ErrorNoSuchKey))
 }
 

@@ -88,7 +88,7 @@ func TestSegmentWriterEncodeTable(t *testing.T) {
 
 	// Create a random index table
 	for _, pair := range pairs {
-		err := writer.table.Put(pair.Key, pair.Value)
+		err := writer.table.Put(pair)
 		is.NoErr(err)
 	}
 

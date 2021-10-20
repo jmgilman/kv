@@ -12,10 +12,15 @@ var ErrorValueTooLarge = errors.New("value exceeds max size")
 
 // KVPair is the elementary structure for storing key/value pairs
 type KVPair struct {
-	Key   string
-	Value []byte
+	Key       string
+	Tombstone bool
+	Value     []byte
 }
 
 func NewKVPair(key string, value []byte) KVPair {
-	return KVPair{strings.ToLower(key), value}
+	return KVPair{strings.ToLower(key), false, value}
+}
+
+func DeleteKVPair(key string) KVPair {
+	return KVPair{strings.ToLower(key), true, []byte{}}
 }

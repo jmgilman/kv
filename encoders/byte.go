@@ -8,7 +8,6 @@ import (
 	"math"
 
 	"github.com/jmgilman/kv"
-	"github.com/jmgilman/kv/domain"
 )
 
 const headerSize = 8
@@ -21,6 +20,12 @@ type byteEncodeHeader struct {
 }
 
 type ByteEncoder struct{}
+
+func NewKVPair(key string, value []byte, tombstone bool) kv.KVPair {
+	pair := kv.NewKVPair(key, value)
+	pair.Tombstone = tombstone
+	return pair
+}
 
 func (b ByteEncoder) decodeHeader(data io.Reader) (byteEncodeHeader, error) {
 	readBuf := make([]byte, 4)
@@ -107,7 +112,13 @@ func (b ByteEncoder) DecodePair(data io.Reader) (kv.KVPair, error) {
 		value = readBuf
 	}
 
-	return kv.NewKVPair(key, value), nil
+	// Read tombstone
+	var tombstone bool
+	if err := binary.Read(data, binary.BigEndian, &tombstone); err != nil {
+		return kv.KVPair{}, err
+	}
+
+	return NewKVPair(key, value, tombstone), nil
 }
 
 func (b ByteEncoder) EncodePair(pair kv.KVPair) ([]byte, error) {
@@ -145,6 +156,11 @@ func (b ByteEncoder) EncodePair(pair kv.KVPair) ([]byte, error) {
 		return nil, err
 	}
 
+	// Write tombstone
+	if err := binary.Write(buf, binary.BigEndian, pair.Tombstone); err != nil {
+		return nil, err
+	}
+
 	return buf.Bytes(), nil
 }
 
@@ -159,6 +175,6 @@ func newByteEncodeHeader(keySize, valueSize int) byteEncodeHeader {
 	}
 }
 
-func NewByteEncoder() domain.Encoder {
+func NewByteEncoder() kv.Encoder {
 	return ByteEncoder{}
 }

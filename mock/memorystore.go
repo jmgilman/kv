@@ -12,7 +12,13 @@ type MockMemoryStore struct {
 }
 
 func (m *MockMemoryStore) Delete(key string) error {
-	panic("unimplemented")
+	for i, pair := range m.store {
+		if key == pair.Key {
+			m.store = append(m.store[:i], m.store[i+1:]...)
+		}
+	}
+
+	return nil
 }
 
 func (m *MockMemoryStore) Get(key string) (*kv.KVPair, error) {
@@ -50,8 +56,8 @@ func (m *MockMemoryStore) Pairs() []*kv.KVPair {
 	return pairs
 }
 
-func (m *MockMemoryStore) Put(key string, value []byte) error {
-	m.store = append(m.store, kv.NewKVPair(key, value))
+func (m *MockMemoryStore) Put(pair kv.KVPair) error {
+	m.store = append(m.store, pair)
 	sort.Slice(m.store, func(i, j int) bool {
 		return m.store[i].Key < m.store[j].Key
 	})
