@@ -8,15 +8,13 @@ import (
 	"github.com/spf13/afero"
 )
 
-type StoreFactory func() kv.MemoryStore
-
 // SegmentBackend implements kv.SegmentBackend by providing persistent storage
 // for Segment's using SSTable's stored on the local filesystem.
 type SegmentBackend struct {
 	encoder      kv.Encoder
 	fs           afero.Fs
 	indexFactor  int
-	storeFactory StoreFactory
+	storeFactory kv.MemoryStoreFactory
 	root         string
 }
 
@@ -86,7 +84,7 @@ func (s *SegmentBackend) NewWriter(id kv.SegmentID) (kv.SegmentWriter, error) {
 	return &writer, nil
 }
 
-func NewSegmentBackend(root string, encoder kv.Encoder, indexFactor int, storeFactory StoreFactory) SegmentBackend {
+func NewSegmentBackend(root string, encoder kv.Encoder, indexFactor int, storeFactory kv.MemoryStoreFactory) SegmentBackend {
 	return SegmentBackend{
 		encoder:      encoder,
 		fs:           afero.NewOsFs(),

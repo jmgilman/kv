@@ -1,5 +1,8 @@
 package kv
 
+// MemoryStoreFactory is a function that produces new MemoryStore's.
+type MemoryStoreFactory func() MemoryStore
+
 // NVStore represents a non-volatile append-only structure for storing
 // MemoryStore's.
 type NVStore interface {
