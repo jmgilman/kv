@@ -14,12 +14,11 @@ import (
 // a MemoryStore in order to build a sparse index of its stored KVPair's to
 // reduce the amount of IO required to find a key.
 type Segment struct {
-	data        io.ReadSeeker
-	id          kv.SegmentID
-	encoder     kv.Encoder
-	index       kv.MemoryStore
-	indexFactor int
-	size        int
+	data    io.ReadSeeker
+	id      kv.SegmentID
+	encoder kv.Encoder
+	index   kv.MemoryStore
+	size    int
 }
 
 // Get searches the underlying SSTable for the given key by first checking
@@ -58,6 +57,52 @@ func (s *Segment) Get(key string) (*kv.KVPair, error) {
 	return nil, kv.ErrorNoSuchKey
 }
 
+// ID returns the unique ID of this segment.
+func (s *Segment) ID() kv.SegmentID {
+	return s.id
+}
+
+// LoadIndex populates the internal index table of the segment by reading the
+// index table data from the internal data stream.
+func (s *Segment) LoadIndex() error {
+	// Get the size of the index table data
+	buf := make([]byte, 4)
+
+	_, err := s.data.Seek(-4, io.SeekEnd)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.data.Read(buf)
+	if err != nil {
+		return err
+	}
+	indexSize := binary.BigEndian.Uint32(buf)
+
+	// Create the index table
+	_, err = s.data.Seek(int64(0-(int64(indexSize)+4)), io.SeekEnd)
+	if err != nil {
+		return nil
+	}
+
+	reader := LimitReadSeeker(s.data, int64(indexSize))
+	cursor := kv.NewCursor(s.encoder, reader)
+	for {
+		pair, err := cursor.Next()
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			} else {
+				return err
+			}
+		}
+
+		s.index.Put(pair.Key, pair.Value)
+	}
+
+	return nil
+}
+
 // searchIndex searches the index table to find the range, in bytes, where the
 // key is expected to be found. Returns ErrorNoSuchKey if the key is outside
 // the range of the index table.
@@ -92,13 +137,12 @@ func (s *Segment) searchIndex(key string) (start int, end int, err error) {
 	return start, end, nil
 }
 
-func NewSegment(data io.ReadSeeker, encoder kv.Encoder, index kv.MemoryStore, indexFactor int, size int) Segment {
+func NewSegment(data io.ReadSeeker, encoder kv.Encoder, index kv.MemoryStore, size int) Segment {
 	return Segment{
-		data:        data,
-		encoder:     encoder,
-		index:       index,
-		indexFactor: indexFactor,
-		size:        size,
+		data:    data,
+		encoder: encoder,
+		index:   index,
+		size:    size,
 	}
 }
 

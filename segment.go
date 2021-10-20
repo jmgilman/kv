@@ -11,16 +11,25 @@ type SegmentID = uuid.UUID
 // Segment is the base building block for a non-volatile KV store and provides
 // a durable version of a MemoryStore.
 type Segment interface {
+	// ID returns the unique ID of this segment.
+	ID() SegmentID
 	// Get searches the segment for the given key and returns the KVPair if found.
 	// Returns ErrorNoSuchKey if the key was not found.
 	Get(key string) (*KVPair, error)
 }
 
-// SegmentBackend represents a system which is capable of persistently storing
-// and retrieving Segment's.
+// SegmentBackend represents an interface which is capable of persistently
+// storing and retrieving Segment's.
 type SegmentBackend interface {
-	Load(id SegmentID, encoder Encoder) (Segment, error)
-	New(id SegmentID, encoder Encoder) (SegmentWriter, error)
+	// Get returns the Segment with the given ID.
+	Get(id SegmentID) (Segment, error)
+
+	// New creates a new Segment from a MemoryStore and returns its ID.
+	New(store MemoryStore) (SegmentID, error)
+
+	// NewWriter creates a new Segment and wraps it in a SegmentWriter for
+	// further manipulation.
+	NewWriter(id SegmentID) (SegmentWriter, error)
 }
 
 // SegmentWriter provides an interface for building segment's through writing
@@ -30,10 +39,10 @@ type SegmentWriter interface {
 	Close() error
 
 	// Writes an individual KVPair to the internal stream.
-	Write(pair KVPair) error
+	Write(pair KVPair) (int, error)
 
 	// Writes a slice of KVPair's to the internal stream.
-	WriteAll(pairs []KVPair) error
+	WriteAll(pairs []KVPair) (int, error)
 }
 
 // SegmentLevel is an ordered slice of Segment's where smaller indexed Segment's
