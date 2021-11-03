@@ -50,25 +50,23 @@ func (s *SegmentBackend) getFileName(id kv.SegmentID) string {
 }
 
 // New creates a new segment from a MemoryStore and returns its ID.
-func (s *SegmentBackend) New(store kv.MemoryStore) (kv.SegmentID, error) {
+func (s *SegmentBackend) New(id kv.SegmentID, store kv.MemoryStore) error {
 	// Create file
-	id := kv.NewSegmentID()
 	writer, err := s.NewWriter(id)
 	if err != nil {
-		return id, err
+		return err
 	}
 
 	// Write contents of MemoryStore
 	for _, pair := range store.Pairs() {
 		_, err := writer.Write(*pair)
 		if err != nil {
-			return id, err
+			return err
 		}
 	}
 
 	// Close file
-	err = writer.Close()
-	return id, err
+	return writer.Close()
 }
 
 // NewWriter creates a new segment and returns it wrapped in a SegmentWriter.

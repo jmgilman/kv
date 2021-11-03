@@ -7,7 +7,7 @@ type MemoryStoreFactory func() MemoryStore
 // MemoryStore's.
 type NVStore interface {
 	Get(key string) (*KVPair, error)
-	Put(store MemoryStore) error
+	New(store MemoryStore) (SegmentID, error)
 }
 
 // MemoryStore represents an ordered in-memory storage object for key/value

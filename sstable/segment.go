@@ -107,6 +107,16 @@ func (s *Segment) LoadIndex() error {
 	return nil
 }
 
+// Min returns the lowest key stored in this segment.
+func (s *Segment) Min() *kv.KVPair {
+	return s.index.Min()
+}
+
+// Max returns the highest key stored in this segment.
+func (s *Segment) Max() *kv.KVPair {
+	return s.index.Max()
+}
+
 // searchIndex searches the index table to find the range, in bytes, where the
 // key is expected to be found. Returns ErrorNoSuchKey if the key is outside
 // the range of the index table.

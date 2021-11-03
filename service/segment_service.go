@@ -1,6 +1,8 @@
 package service
 
-import "github.com/jmgilman/kv"
+import (
+	"github.com/jmgilman/kv"
+)
 
 type SegmentService struct {
 	backend      kv.SegmentBackend
@@ -9,9 +11,14 @@ type SegmentService struct {
 	storeFactory kv.MemoryStoreFactory
 }
 
+func (s *SegmentService) Get(key string) (*kv.KVPair, error) {
+	return nil, nil
+}
+
 func (s *SegmentService) New(store kv.MemoryStore) (kv.SegmentID, error) {
 	// Create new segment
-	id, err := s.backend.New(store)
+	id := kv.NewSegmentID()
+	err := s.backend.New(id, store)
 	if err != nil {
 		return id, err
 	}

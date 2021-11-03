@@ -1,8 +1,6 @@
 package mock
 
 import (
-	"fmt"
-
 	"github.com/jmgilman/kv"
 )
 
@@ -13,6 +11,14 @@ type MockSegment struct {
 
 func (m *MockSegment) Get(key string) (*kv.KVPair, error) {
 	return m.store.Get(key)
+}
+
+func (m *MockSegment) Min() *kv.KVPair {
+	return m.store.Min()
+}
+
+func (m *MockSegment) Max() *kv.KVPair {
+	return m.store.Max()
 }
 
 func (m *MockSegment) ID() kv.SegmentID {
@@ -32,29 +38,38 @@ type MockSegmentBackend struct {
 	segments map[kv.SegmentID]MockSegment
 }
 
+func (m *MockSegmentBackend) Delete(id kv.SegmentID) error {
+	_, ok := m.segments[id]
+	if !ok {
+		return kv.ErrorSegmentNotFound
+	}
+
+	delete(m.segments, id)
+	return nil
+}
+
 func (m *MockSegmentBackend) Get(id kv.SegmentID) (kv.Segment, error) {
 	segment, ok := m.segments[id]
 	if !ok {
-		return &MockSegment{}, fmt.Errorf("Segment not found")
+		return &MockSegment{}, kv.ErrorSegmentNotFound
 	}
 
 	return &segment, nil
 }
 
-func (m *MockSegmentBackend) New(store kv.MemoryStore) (kv.SegmentID, error) {
+func (m *MockSegmentBackend) New(id kv.SegmentID, store kv.MemoryStore) error {
 	var pairs []kv.KVPair
 	for _, pair := range store.Pairs() {
 		pairs = append(pairs, *pair)
 	}
 
-	id := kv.NewSegmentID()
 	segment := MockSegment{
 		id:    id,
 		store: NewMockMemoryStore(pairs),
 	}
 	m.segments[id] = segment
 
-	return id, nil
+	return nil
 }
 
 func (m *MockSegmentBackend) NewWriter(id kv.SegmentID) (kv.SegmentWriter, error) {

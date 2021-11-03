@@ -67,7 +67,8 @@ func TestSegmentBackendNew(t *testing.T) {
 	store := helper.NewRandomMemoryStore(size)
 
 	// Write store
-	id, err := backend.New(&store)
+	id := kv.NewSegmentID()
+	err := backend.New(id, &store)
 	is.NoErr(err)
 
 	// Verify correct file exists
